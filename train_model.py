@@ -25,8 +25,8 @@ model.fit(X_train, y_train)
 accuracy = model.score(X_test, y_test)
 print(f"Plaintext model accuracy: {accuracy:.4f}")
 
-joblib.dump(model, "model.pkl")
-joblib.dump(scaler, "scaler.pkl")
+joblib.dump(model, "models/diabetes_model.pkl")
+joblib.dump(scaler, "models/diabetes_scaler.pkl")
 
 print("Saved model.pkl and scaler.pkl")
 print("Weights:", model.coef_)

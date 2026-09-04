@@ -1,45 +1,65 @@
 from flask import Flask, render_template, request, jsonify
 import joblib
 import numpy as np
-from he_utils import create_context, encrypt_vector, decrypt_vector
+from encrypted_inference import run_encrypted_inference
+from phq9_screener import run_encrypted_phq9, PHQ9_QUESTIONS
 
 app = Flask(__name__)
 
-model = joblib.load("model.pkl")
-scaler = joblib.load("scaler.pkl")
+DIABETES_FEATURES = ["pregnancies", "glucose", "blood_pressure", "skin_thickness",
+                      "insulin", "bmi", "diabetes_pedigree", "age"]
 
-FEATURE_NAMES = ["pregnancies", "glucose", "blood_pressure", "skin_thickness",
-                  "insulin", "bmi", "diabetes_pedigree", "age"]
+CARDIO_FEATURES = ["male", "age", "education", "currentSmoker", "cigsPerDay",
+                    "BPMeds", "prevalentStroke", "prevalentHyp", "diabetes",
+                    "totChol", "sysBP", "diaBP", "BMI", "heartRate", "glucose"]
+
+diabetes_model = joblib.load("models/diabetes_model.pkl")
+diabetes_scaler = joblib.load("models/diabetes_scaler.pkl")
+cardio_model = joblib.load("models/cardio_model.pkl")
+cardio_scaler = joblib.load("models/cardio_scaler.pkl")
 
 @app.route("/")
 def home():
-    return render_template("index.html", features=FEATURE_NAMES)
+    return render_template("index.html",
+                            diabetes_features=DIABETES_FEATURES,
+                            cardio_features=CARDIO_FEATURES,
+                            phq9_questions=PHQ9_QUESTIONS)
 
-@app.route("/predict", methods=["POST"])
-def predict():
+@app.route("/predict/diabetes", methods=["POST"])
+def predict_diabetes():
     data = request.get_json()
-    raw_values = [float(data[f]) for f in FEATURE_NAMES]
-
-    scaled = scaler.transform([raw_values])[0]
-
-    # --- Traditional approach: plaintext, model sees raw data directly ---
-    plaintext_prob = model.predict_proba([scaled])[0][1]
-
-    # --- HE approach: encrypted computation, model never sees raw values ---
-    context = create_context()
-    encrypted_input = encrypt_vector(context, scaled.tolist())
-    weights = model.coef_[0].tolist()
-    bias = model.intercept_[0]
-    encrypted_result = encrypted_input.dot(weights) + bias
-    decrypted_score = decrypt_vector(encrypted_result)
-    linear_score = decrypted_score[0] if isinstance(decrypted_score, list) else decrypted_score
-    he_prob = 1 / (1 + np.exp(-linear_score))
-
+    raw_values = [float(data[f]) for f in DIABETES_FEATURES]
+    scaled = diabetes_scaler.transform([raw_values])[0]
+    plaintext_prob = diabetes_model.predict_proba([scaled])[0][1]
+    he_prob = run_encrypted_inference(raw_values, "models/diabetes_model.pkl", "models/diabetes_scaler.pkl")
     return jsonify({
+        "type": "probability",
         "traditional_probability": round(float(plaintext_prob), 4),
-        "he_probability": round(float(he_prob), 4),
-        "data_exposed_traditional": True,
-        "data_exposed_he": False
+        "he_probability": round(float(he_prob), 4)
+    })
+
+@app.route("/predict/cardio", methods=["POST"])
+def predict_cardio():
+    data = request.get_json()
+    raw_values = [float(data[f]) for f in CARDIO_FEATURES]
+    scaled = cardio_scaler.transform([raw_values])[0]
+    plaintext_prob = cardio_model.predict_proba([scaled])[0][1]
+    he_prob = run_encrypted_inference(raw_values, "models/cardio_model.pkl", "models/cardio_scaler.pkl")
+    return jsonify({
+        "type": "probability",
+        "traditional_probability": round(float(plaintext_prob), 4),
+        "he_probability": round(float(he_prob), 4)
+    })
+
+@app.route("/predict/phq9", methods=["POST"])
+def predict_phq9():
+    data = request.get_json()
+    answers = [int(data[f"q{i}"]) for i in range(9)]
+    score, band = run_encrypted_phq9(answers)
+    return jsonify({
+        "type": "phq9",
+        "score": score,
+        "band": band
     })
 
 if __name__ == "__main__":
