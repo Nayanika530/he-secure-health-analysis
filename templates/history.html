@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head><title>My Health History — Privital</title></head>
+<body>
+    <h1>My Health History</h1>
+    <a href="/">Back to Analysis</a>
+    <table border="1" cellpadding="8">
+        <tr><th>Type</th><th>Result</th><th>Date</th></tr>
+        {% for r in records %}
+        <tr>
+            <td>{{ r.record_type }}</td>
+            <td>{{ r.result_summary }}</td>
+            <td>{{ r.timestamp }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

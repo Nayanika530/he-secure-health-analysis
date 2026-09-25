@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Privacy Dashboard — Privital</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; }
+        .stat-box { border: 1px solid #ccc; border-radius: 6px; padding: 15px; margin-bottom: 10px; }
+        .stat-number { font-size: 2em; font-weight: bold; color: #5cb85c; }
+        .zero { color: #d9534f; }
+    </style>
+</head>
+<body>
+    <h1>Privacy Dashboard</h1>
+    <a href="/">Back to Analysis</a> | <a href="/history">My History</a>
+
+    <div class="stat-box">
+        <div class="stat-number">{{ total_records }}</div>
+        <div>Total encrypted computations run</div>
+    </div>
+
+    <div class="stat-box">
+        <div class="stat-number zero">0</div>
+        <div>Raw plaintext health values stored on server</div>
+    </div>
+
+    <div class="stat-box">
+        <div>Diabetes analyses: <strong>{{ diabetes_count }}</strong></div>
+        <div>Cardiovascular analyses: <strong>{{ cardio_count }}</strong></div>
+        <div>PHQ-9 screenings: <strong>{{ phq9_count }}</strong></div>
+    </div>
+
+    <p><em>Every number above reflects real computations performed using homomorphic encryption (CKKS scheme via TenSEAL). Your raw input values were never stored — only the final analysis result and its type are saved to your history.</em></p>
+</body>
+</html>

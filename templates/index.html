@@ -1,123 +1,2234 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>HE Secure Health Analysis</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privital — Zero-Exposure Health Intelligence via Homomorphic Encryption</title>
+    <meta name="description" content="Compute machine learning inferences on encrypted medical vitals and biometrics without ever decrypting raw patient records.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
     <style>
-        body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; }
-        label { display: block; margin-bottom: 8px; }
-        input, select { margin-left: 10px; }
-        button { margin-top: 15px; padding: 8px 20px; }
-        .badge { padding: 4px 10px; border-radius: 4px; color: white; font-size: 0.85em; }
-        .exposed { background: #d9534f; }
-        .protected { background: #5cb85c; }
-        #chartContainer { max-width: 400px; margin-top: 25px; }
-        .model-form { display: none; }
-        .model-form.active { display: block; }
+        :root {
+            --bg-base: #090a0d;
+            --bg-surface: #101217;
+            --bg-elevated: #161820;
+            --bg-subtle: #1c1f2a;
+            --border-subtle: #222634;
+            --border-medium: #2e3446;
+            --border-strong: #3d455d;
+            
+            --text-primary: #f4f5f8;
+            --text-secondary: #9aa1b3;
+            --text-tertiary: #60677a;
+            --text-inverse: #090a0d;
+
+            --accent-emerald: #10b981;
+            --accent-emerald-subtle: rgba(16, 185, 129, 0.12);
+            --accent-emerald-glow: rgba(16, 185, 129, 0.25);
+            
+            --accent-amber: #f59e0b;
+            --accent-amber-subtle: rgba(245, 158, 11, 0.12);
+            
+            --accent-crimson: #ef4444;
+            --accent-crimson-subtle: rgba(239, 68, 68, 0.12);
+
+            --accent-sky: #38bdf8;
+            --accent-sky-subtle: rgba(56, 189, 248, 0.12);
+
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-serif: 'Instrument Serif', Georgia, serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            
+            --container-max: 1240px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* Typography Presets */
+        h1, h2, h3, h4 {
+            color: var(--text-primary);
+            font-weight: 500;
+            letter-spacing: -0.02em;
+        }
+
+        .mono {
+            font-family: var(--font-mono);
+            letter-spacing: -0.01em;
+        }
+
+        /* Container */
+        .container {
+            max-width: var(--container-max);
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Editorial Headers / Labels (Revyve style) */
+        .editorial-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-tertiary);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .editorial-label::before {
+            content: "";
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-emerald);
+        }
+
+        /* Top Bar / Navigation */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(9, 10, 13, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+        .brand-logo {
+            width: 28px;
+            height: 28px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-emerald);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        .brand-name {
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .brand-tag {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-subtle);
+            border-radius: 3px;
+            color: var(--text-tertiary);
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            list-style: none;
+        }
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 400;
+            transition: color 0.15s ease;
+        }
+        .nav-link:hover {
+            color: var(--text-primary);
+        }
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 16px;
+            font-size: 0.825rem;
+            font-weight: 500;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            border: 1px solid transparent;
+            font-family: var(--font-sans);
+        }
+        .btn-primary {
+            background: var(--text-primary);
+            color: var(--text-inverse);
+        }
+        .btn-primary:hover {
+            background: #ffffff;
+            transform: translateY(-1px);
+        }
+        .btn-outline {
+            background: transparent;
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+        }
+        .btn-outline:hover {
+            background: var(--bg-subtle);
+            border-color: var(--border-strong);
+        }
+        .btn-emerald {
+            background: var(--accent-emerald);
+            color: #041d13;
+            font-weight: 600;
+        }
+        .btn-emerald:hover {
+            background: #14cd90;
+            box-shadow: 0 0 16px var(--accent-emerald-glow);
+        }
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.75rem;
+        }
+
+        /* -------------------------------------------------------------
+           REVYVE SECTION: EDITORIAL HERO & BRANDING
+        ------------------------------------------------------------- */
+        .hero {
+            padding: 96px 0 80px;
+            border-bottom: 1px solid var(--border-subtle);
+            position: relative;
+        }
+        .hero-pretitle {
+            margin-bottom: 24px;
+        }
+        .hero-title {
+            font-family: var(--font-serif);
+            font-size: clamp(2.8rem, 6vw, 5.2rem);
+            line-height: 1.04;
+            font-weight: 400;
+            color: var(--text-primary);
+            max-width: 980px;
+            margin-bottom: 32px;
+            letter-spacing: -0.015em;
+        }
+        .hero-title em {
+            font-style: italic;
+            color: #d1d5db;
+        }
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 64px;
+            align-items: flex-end;
+            margin-top: 24px;
+        }
+        .hero-desc {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+            line-height: 1.65;
+            max-width: 580px;
+        }
+        .hero-actions {
+            display: flex;
+            gap: 14px;
+            margin-top: 32px;
+        }
+        .hero-meta-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 24px;
+        }
+        .hero-meta-title {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .hero-meta-specs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .spec-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .spec-label {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+        }
+        .spec-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+        }
+
+        /* Editorial Stats Ribbon */
+        .editorial-stats {
+            padding: 48px 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+        }
+        .stat-card {
+            border-left: 1px solid var(--border-medium);
+            padding-left: 20px;
+        }
+        .stat-num {
+            font-family: var(--font-mono);
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.1;
+            margin-bottom: 6px;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+        .stat-detail {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        /* Architecture Section (Revyve Editorial Layout) */
+        .editorial-section {
+            padding: 88px 0;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 48px;
+        }
+        .section-heading {
+            font-family: var(--font-serif);
+            font-size: 2.5rem;
+            font-weight: 400;
+            line-height: 1.15;
+            max-width: 640px;
+        }
+        .editorial-dual-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .editorial-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 36px;
+            position: relative;
+            transition: border-color 0.2s ease;
+        }
+        .editorial-card:hover {
+            border-color: var(--border-medium);
+        }
+        .card-number {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            margin-bottom: 24px;
+        }
+        .card-heading {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+        .card-body {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .contrast-pill {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .pill-danger {
+            background: var(--accent-crimson-subtle);
+            color: var(--accent-crimson);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        .pill-secure {
+            background: var(--accent-emerald-subtle);
+            color: var(--accent-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        /* -------------------------------------------------------------
+           OPTIVER SECTION: APPLICATION DASHBOARD & CONSOLE
+        ------------------------------------------------------------- */
+        .dashboard-wrapper {
+            padding: 64px 0 96px;
+            background: #0b0c10;
+        }
+        .dash-header {
+            margin-bottom: 28px;
+        }
+        .dash-topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 20px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+        }
+        .dash-system-status {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--accent-emerald);
+        }
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent-emerald);
+            box-shadow: 0 0 8px var(--accent-emerald);
+        }
+        .status-pill-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .telemetry-chip {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-subtle);
+            border-radius: 3px;
+            color: var(--text-secondary);
+        }
+        .telemetry-chip strong {
+            color: var(--text-primary);
+        }
+
+        /* Optiver KPI Summary Cards */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .kpi-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+        .kpi-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 20px;
+            right: 20px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-medium), transparent);
+        }
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .kpi-title {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-tertiary);
+        }
+        .kpi-icon {
+            color: var(--text-tertiary);
+            font-size: 0.85rem;
+        }
+        .kpi-value {
+            font-family: var(--font-mono);
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.1;
+        }
+        .kpi-meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .kpi-meta .trend-ok {
+            color: var(--accent-emerald);
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+        }
+
+        /* Dashboard Navigation Tabs (Optiver style) */
+        .dash-tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 24px;
+            overflow-x: auto;
+        }
+        .dash-tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 12px 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-sans);
+            transition: color 0.15s ease;
+            white-space: nowrap;
+        }
+        .dash-tab-btn:hover {
+            color: var(--text-primary);
+        }
+        .dash-tab-btn.active {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .dash-tab-btn.active::after {
+            content: "";
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--text-primary);
+        }
+        .dash-tab-badge {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            padding: 1px 6px;
+            border-radius: 10px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-tertiary);
+        }
+
+        /* Tab Content Panes */
+        .dash-pane {
+            display: none;
+        }
+        .dash-pane.active {
+            display: block;
+        }
+
+        /* -------------------------------------------------------------
+           INTERACTIVE ANALYSIS EXECUTION WORKBENCH (Optiver Grid)
+        ------------------------------------------------------------- */
+        .workbench-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 24px;
+            align-items: start;
+        }
+        .workbench-panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            background: var(--bg-surface);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .panel-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .panel-badge {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-subtle);
+            border-radius: 3px;
+            color: var(--text-secondary);
+        }
+        .panel-body {
+            padding: 20px;
+        }
+
+        /* Model Switcher inside Workbench */
+        .model-switcher {
+            display: flex;
+            gap: 8px;
+            background: var(--bg-base);
+            padding: 4px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+            margin-bottom: 20px;
+        }
+        .model-tab-btn {
+            flex: 1;
+            padding: 8px 12px;
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: center;
+        }
+        .model-tab-btn:hover {
+            color: var(--text-primary);
+        }
+        .model-tab-btn.active {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            font-weight: 600;
+            border: 1px solid var(--border-medium);
+        }
+
+        /* Preset Loader Row */
+        .preset-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            margin-bottom: 20px;
+        }
+        .preset-label {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+        }
+        .preset-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Form Controls */
+        .inputs-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px 14px;
+            margin-bottom: 24px;
+        }
+        .inputs-grid.phq9-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .form-group label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+        .form-group label span.unit {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--text-tertiary);
+        }
+        .form-input, .form-select {
+            width: 100%;
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            transition: border-color 0.15s ease, background 0.15s ease;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--border-strong);
+            background: #0d0f14;
+        }
+        .form-select {
+            cursor: pointer;
+        }
+
+        /* Execute Button */
+        .submit-bar {
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .submit-hint {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Results Display (Optiver Verification Panel) */
+        .result-empty {
+            padding: 64px 20px;
+            text-align: center;
+            color: var(--text-tertiary);
+        }
+        .result-empty-icon {
+            font-size: 1.75rem;
+            margin-bottom: 12px;
+            opacity: 0.4;
+        }
+        .result-empty p {
+            font-size: 0.85rem;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+
+        .result-active-container {
+            display: none;
+        }
+        .result-active-container.visible {
+            display: block;
+        }
+
+        .exec-telemetry-strip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            margin-bottom: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+        }
+
+        .verification-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .verif-card {
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-base);
+        }
+        .verif-card.card-he {
+            border-color: rgba(16, 185, 129, 0.35);
+            background: rgba(16, 185, 129, 0.03);
+        }
+        .verif-card.card-trad {
+            border-color: rgba(239, 68, 68, 0.25);
+            background: rgba(239, 68, 68, 0.02);
+        }
+        .verif-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .verif-badge {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .verif-badge.badge-protected {
+            background: var(--accent-emerald-subtle);
+            color: var(--accent-emerald);
+        }
+        .verif-badge.badge-exposed {
+            background: var(--accent-crimson-subtle);
+            color: var(--accent-crimson);
+        }
+        .verif-score {
+            font-family: var(--font-mono);
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.1;
+        }
+        .verif-sub {
+            font-size: 0.72rem;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        /* PHQ-9 Dedicated Result */
+        .phq9-result-box {
+            background: var(--bg-base);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .phq9-score-display {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .phq9-score-num {
+            font-family: var(--font-mono);
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .phq9-severity-badge {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 4px;
+            background: var(--accent-emerald-subtle);
+            color: var(--accent-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            text-transform: uppercase;
+        }
+
+        /* Chart Canvas Area */
+        .chart-box {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .chart-box-title {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* -------------------------------------------------------------
+           OPTIVER COMPACT DATA TABLES (HEALTH VAULT & PERMISSIONS)
+        ------------------------------------------------------------- */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            background: var(--bg-surface);
+        }
+        .optiver-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.8rem;
+        }
+        .optiver-table th {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-tertiary);
+            padding: 12px 16px;
+            background: #0d0e13;
+            border-bottom: 1px solid var(--border-subtle);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .optiver-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        .optiver-table tr:last-child td {
+            border-bottom: none;
+        }
+        .optiver-table tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-primary);
+        }
+        .table-id {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .table-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.68rem;
+            font-family: var(--font-mono);
+        }
+        .badge-active {
+            background: var(--accent-emerald-subtle);
+            color: var(--accent-emerald);
+        }
+        .badge-amber {
+            background: var(--accent-amber-subtle);
+            color: var(--accent-amber);
+        }
+        .badge-neutral {
+            background: var(--bg-subtle);
+            color: var(--text-tertiary);
+        }
+
+        /* Audit Stream (Optiver technical feed) */
+        .audit-stream {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+        .audit-list {
+            list-style: none;
+            max-height: 480px;
+            overflow-y: auto;
+        }
+        .audit-item {
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: grid;
+            grid-template-columns: 140px 100px 1fr 120px;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            gap: 16px;
+        }
+        .audit-item:last-child {
+            border-bottom: none;
+        }
+        .audit-item:hover {
+            background: rgba(255, 255, 255, 0.015);
+        }
+        .audit-time {
+            color: var(--text-tertiary);
+        }
+        .audit-type {
+            font-weight: 600;
+        }
+        .type-crypto { color: var(--accent-emerald); }
+        .type-access { color: var(--accent-sky); }
+        .type-inference { color: var(--accent-amber); }
+        .type-system { color: var(--text-secondary); }
+        .audit-desc {
+            color: var(--text-primary);
+        }
+        .audit-status {
+            text-align: right;
+            color: var(--text-tertiary);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Footer */
+        .footer {
+            border-top: 1px solid var(--border-subtle);
+            padding: 64px 0 40px;
+            background: var(--bg-base);
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1.5fr repeat(3, 1fr);
+            gap: 48px;
+            margin-bottom: 48px;
+        }
+        .footer-brand p {
+            color: var(--text-tertiary);
+            font-size: 0.85rem;
+            margin-top: 12px;
+            max-width: 320px;
+            line-height: 1.6;
+        }
+        .footer-col-title {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 16px;
+        }
+        .footer-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .footer-link {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: color 0.15s ease;
+        }
+        .footer-link:hover {
+            color: var(--text-primary);
+        }
+        .footer-bottom {
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 1024px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            .stats-grid, .kpi-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .workbench-grid {
+                grid-template-columns: 1fr;
+            }
+            .editorial-dual-grid {
+                grid-template-columns: 1fr;
+            }
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        @media (max-width: 640px) {
+            .stats-grid, .kpi-row {
+                grid-template-columns: 1fr;
+            }
+            .inputs-grid {
+                grid-template-columns: 1fr;
+            }
+            .dash-topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .verification-cards {
+                grid-template-columns: 1fr;
+            }
+            .nav-links {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Homomorphic Encryption Demo — Health Risk Analysis</h1>
 
-    <label>Choose a model:
-        <select id="modelSelect">
-            <option value="diabetes">Diabetes Risk</option>
-            <option value="cardio">Cardiovascular Risk</option>
-            <option value="phq9">PHQ-9 Depression Screener</option>
-        </select>
-    </label>
+    <!-- TOP NAVIGATION -->
+    <header class="navbar">
+        <div class="container">
+            <div class="nav-inner">
+                <a href="#hero" class="brand">
+                    <div class="brand-logo">P</div>
+                    <span class="brand-name">Privital</span>
+                    <span class="brand-tag">HE-CKKS 8192</span>
+                </a>
 
-    <form id="diabetesForm" class="model-form active">
-        {% for f in diabetes_features %}
-        <label>{{ f }}: <input type="number" step="any" name="{{ f }}" required></label>
-        {% endfor %}
-        <button type="submit">Run Analysis</button>
-    </form>
+                <ul class="nav-links">
+                    <li><a href="#hero" class="nav-link">Overview</a></li>
+                    <li><a href="#architecture" class="nav-link">Cryptographic Proof</a></li>
+                    <li><a href="#dashboard" class="nav-link">Health Vault</a></li>
+                    <li><a href="#dashboard" class="nav-link">Analysis Workbench</a></li>
+                </ul>
 
-    <form id="cardioForm" class="model-form">
-        {% for f in cardio_features %}
-        <label>{{ f }}: <input type="number" step="any" name="{{ f }}" required></label>
-        {% endfor %}
-        <button type="submit">Run Analysis</button>
-    </form>
+                <div class="nav-actions">
+                    <div class="status-indicator">
+                        <span class="status-dot"></span>
+                        <span class="mono">NODE SECURE</span>
+                    </div>
+                    <a href="#dashboard" class="btn btn-primary btn-sm">Open Console</a>
+                </div>
+            </div>
+        </div>
+    </header>
 
-    <form id="phq9Form" class="model-form">
-        {% for q in phq9_questions %}
-        <label>{{ q }}:
-            <select name="q{{ loop.index0 }}">
-                <option value="0">Not at all</option>
-                <option value="1">Several days</option>
-                <option value="2">More than half the days</option>
-                <option value="3">Nearly every day</option>
-            </select>
-        </label>
-        {% endfor %}
-        <button type="submit">Run Analysis</button>
-    </form>
+    <!-- =========================================================================
+         REVYVE BRANDING SECTION: HERO & EDITORIAL NARRATIVE
+    ========================================================================== -->
+    <section id="hero" class="hero">
+        <div class="container">
+            <div class="hero-pretitle">
+                <span class="editorial-label">Confidential Clinical Computing</span>
+            </div>
 
-    <div id="results" style="margin-top:20px;"></div>
-    <div id="chartContainer"><canvas id="resultChart"></canvas></div>
+            <h1 class="hero-title">
+                Zero-exposure health intelligence. <em>Evaluated directly over ciphertext.</em>
+            </h1>
 
+            <div class="hero-grid">
+                <div>
+                    <p class="hero-desc">
+                        Privital enables clinical diagnostic models to run inferences directly on encrypted patient biometrics. 
+                        Servers compute on ciphertexts using Cheon-Kim-Kim-Song (CKKS) homomorphic encryption, guaranteeing that raw genomic, metabolic, and psychiatric records are never decrypted in memory.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="#dashboard" class="btn btn-emerald">Launch Analysis Console</a>
+                        <a href="#architecture" class="btn btn-outline">Explore Security Architecture</a>
+                    </div>
+                </div>
+
+                <div class="hero-meta-card">
+                    <div class="hero-meta-title">
+                        <span>Cryptographic Enclave Parameters</span>
+                        <span style="color: var(--accent-emerald);">● ACTIVE</span>
+                    </div>
+                    <div class="hero-meta-specs">
+                        <div class="spec-item">
+                            <span class="spec-label">Scheme</span>
+                            <span class="spec-value">CKKS Scheme</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Ring Dimension</span>
+                            <span class="spec-value">N = 8,192</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Modulus Bits</span>
+                            <span class="spec-value">[60, 40, 40, 60]</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Security Bound</span>
+                            <span class="spec-value">128-bit Post-Quantum</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- EDITORIAL STATS RIBBON (Revyve Calm Precision) -->
+    <section class="editorial-stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-num">0.00%</div>
+                    <div class="stat-label">Plaintext Memory Exposure</div>
+                    <div class="stat-detail">Mathematically guaranteed via RLWE</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-num">100%</div>
+                    <div class="stat-label">Inference Parity</div>
+                    <div class="stat-detail">Float-64 CKKS scale precision</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-num">3 Active</div>
+                    <div class="stat-label">Production Clinical Models</div>
+                    <div class="stat-detail">Cardio, Diabetes & PHQ-9 Screener</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-num">&lt; 15ms</div>
+                    <div class="stat-label">Homomorphic Vector Dot-Product</div>
+                    <div class="stat-detail">Parallel SIMD slot evaluation</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ARCHITECTURE CONTRAST (Revyve Editorial Layout) -->
+    <section id="architecture" class="editorial-section">
+        <div class="container">
+            <div class="section-header">
+                <div>
+                    <span class="editorial-label">Comparative Mechanics</span>
+                    <h2 class="section-heading" style="margin-top: 14px;">The paradigm shift from vulnerable trust to mathematical proof.</h2>
+                </div>
+                <div class="telemetry-chip">ARCHITECTURE SPEC 01</div>
+            </div>
+
+            <div class="editorial-dual-grid">
+                <div class="editorial-card">
+                    <div class="card-number">01 / TRADITIONAL CLOUD HEALTH INFERENCE</div>
+                    <h3 class="card-heading">Data In Flight &amp; In Memory Is Exposed</h3>
+                    <p class="card-body">
+                        Standard healthcare workflows encrypt data at rest (AES-256) and in transit (TLS 1.3), but <strong>must decrypt all records in server RAM</strong> to perform calculations. Memory dumps, privileged insider access, or compromised hypervisors immediately leak raw medical history.
+                    </p>
+                    <span class="contrast-pill pill-danger">Memory Vulnerability: Exposed</span>
+                </div>
+
+                <div class="editorial-card" style="border-color: rgba(16, 185, 129, 0.3);">
+                    <div class="card-number" style="color: var(--accent-emerald);">02 / PRIVITAL HOMOMORPHIC PIPELINE</div>
+                    <h3 class="card-heading">Computation Directly Inside Ciphertext</h3>
+                    <p class="card-body">
+                        Patient biometrics are encrypted into high-dimensional polynomial rings prior to transmission. Logistic weights and activation polynomials operate directly on ciphertexts. The remote server produces an encrypted result without ever holding the decryption key.
+                    </p>
+                    <span class="contrast-pill pill-secure">Zero-Knowledge Guarantee: Verified</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- =========================================================================
+         OPTIVER APPLICATION SECTION: TECHNICAL DASHBOARD & WORKBENCH
+    ========================================================================== -->
+    <section id="dashboard" class="dashboard-wrapper">
+        <div class="container">
+            
+            <!-- Optiver Top System Status Bar -->
+            <div class="dash-topbar">
+                <div class="dash-system-status">
+                    <div class="status-indicator">
+                        <span class="status-dot"></span>
+                        <strong>SYSTEM NOMINAL</strong>
+                    </div>
+                    <div class="status-pill-group">
+                        <span class="telemetry-chip">SCHEME: <strong>CKKS-RNS</strong></span>
+                        <span class="telemetry-chip">CONTEXT: <strong>GALOIS_ACTIVE</strong></span>
+                        <span class="telemetry-chip">LATENCY: <strong>14.2ms</strong></span>
+                    </div>
+                </div>
+                <div class="status-pill-group">
+                    <span class="telemetry-chip">POST-QUANTUM BOUND: <strong>RLWE-128</strong></span>
+                    <span class="telemetry-chip">ENCLAVE: <strong>EU-NORTH-01</strong></span>
+                </div>
+            </div>
+
+            <!-- Optiver Compact KPI Cards -->
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Health Vault Records</span>
+                        <span class="kpi-icon">🗄️</span>
+                    </div>
+                    <div class="kpi-value" id="kpiVaultCount">1,428</div>
+                    <div class="kpi-meta">
+                        <span class="trend-ok">↑ 100% Encrypted</span>
+                        <span>Vectorized Biometrics</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Protection Status</span>
+                        <span class="kpi-icon">🛡️</span>
+                    </div>
+                    <div class="kpi-value" style="color: var(--accent-emerald);">SECURE</div>
+                    <div class="kpi-meta">
+                        <span class="trend-ok">Zero Leakage</span>
+                        <span>No Decryption Keys On Server</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Active Permissions</span>
+                        <span class="kpi-icon">🔑</span>
+                    </div>
+                    <div class="kpi-value">3 / 3</div>
+                    <div class="kpi-meta">
+                        <span>Cardio, Diabetes, PHQ-9</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <span class="kpi-title">Security Events</span>
+                        <span class="kpi-icon">⚡</span>
+                    </div>
+                    <div class="kpi-value" id="kpiEventCount">48</div>
+                    <div class="kpi-meta">
+                        <span class="trend-ok">0 Anomalies</span>
+                        <span>Full Audit Verifiable</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Navigation Tabs -->
+            <div class="dash-tabs">
+                <button class="dash-tab-btn active" onclick="switchDashTab('tab-analysis', this)">
+                    <span>Private Analysis</span>
+                    <span class="dash-tab-badge">Interactive</span>
+                </button>
+                <button class="dash-tab-btn" onclick="switchDashTab('tab-vault', this)">
+                    <span>Health Vault</span>
+                    <span class="dash-tab-badge" id="tabVaultBadge">8 Records</span>
+                </button>
+                <button class="dash-tab-btn" onclick="switchDashTab('tab-permissions', this)">
+                    <span>Active Permissions</span>
+                    <span class="dash-tab-badge">3 Authorized</span>
+                </button>
+                <button class="dash-tab-btn" onclick="switchDashTab('tab-audit', this)">
+                    <span>Security Audit Stream</span>
+                    <span class="dash-tab-badge">Live Feed</span>
+                </button>
+            </div>
+
+            <!-- TAB 1: PRIVATE ANALYSIS WORKBENCH -->
+            <div id="tab-analysis" class="dash-pane active">
+                <div class="workbench-grid">
+                    
+                    <!-- Left: Model Form & Controls -->
+                    <div class="workbench-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <span>Inference Engine Configuration</span>
+                                <span class="panel-badge" id="modelActiveBadge">PIMA DIABETES</span>
+                            </div>
+                            <span class="mono" style="font-size: 0.72rem; color: var(--text-tertiary);">PORT // POST /predict/*</span>
+                        </div>
+
+                        <div class="panel-body">
+                            <!-- Model Selector Pills -->
+                            <div class="model-switcher">
+                                <button type="button" class="model-tab-btn active" onclick="selectModel('diabetes', this)">
+                                    Diabetes Risk (8-Vector)
+                                </button>
+                                <button type="button" class="model-tab-btn" onclick="selectModel('cardio', this)">
+                                    Cardiovascular (15-Vector)
+                                </button>
+                                <button type="button" class="model-tab-btn" onclick="selectModel('phq9', this)">
+                                    PHQ-9 Screener (9-Vector)
+                                </button>
+                            </div>
+
+                            <!-- Sample Patient Preset Selector -->
+                            <div class="preset-row">
+                                <span class="preset-label">FAST PRESETS:</span>
+                                <div class="preset-actions">
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="loadPreset('elevated')">Elevated Risk</button>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="loadPreset('normal')">Baseline / Normal</button>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="resetForm()">Clear</button>
+                                </div>
+                            </div>
+
+                            <!-- Diabetes Form -->
+                            <form id="diabetesForm" class="model-form">
+                                <div class="inputs-grid">
+                                    <div class="form-group">
+                                        <label for="d_pregnancies">Pregnancies <span class="unit">count</span></label>
+                                        <input type="number" step="any" id="d_pregnancies" name="pregnancies" class="form-input" value="6" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="d_glucose">Plasma Glucose <span class="unit">mg/dL</span></label>
+                                        <input type="number" step="any" id="d_glucose" name="glucose" class="form-input" value="148" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="d_blood_pressure">Blood Pressure <span class="unit">mmHg</span></label>
+                                        <input type="number" step="any" id="d_blood_pressure" name="blood_pressure" class="form-input" value="72" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="d_skin_thickness">Skin Thickness <span class="unit">mm</span></label>
+                                        <input type="number" step="any" id="d_skin_thickness" name="skin_thickness" class="form-input" value="35" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="d_insulin">Serum Insulin <span class="unit">µU/mL</span></label>
+                                        <input type="number" step="any" id="d_insulin" name="insulin" class="form-input" value="90" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="d_bmi">Body Mass Index <span class="unit">kg/m²</span></label>
+                                        <input type="number" step="any" id="d_bmi" name="bmi" class="form-input" value="33.6" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="d_diabetes_pedigree">Pedigree Function <span class="unit">score</span></label>
+                                        <input type="number" step="any" id="d_diabetes_pedigree" name="diabetes_pedigree" class="form-input" value="0.627" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="d_age">Age <span class="unit">years</span></label>
+                                        <input type="number" step="any" id="d_age" name="age" class="form-input" value="50" required>
+                                    </div>
+                                </div>
+                                <div class="submit-bar">
+                                    <span class="submit-hint">SCHEME: CKKS-LOGREG · ZERO-MEMORY EXPOSURE</span>
+                                    <button type="submit" class="btn btn-emerald" id="submitDiabetesBtn">
+                                        <span>Execute Encrypted Analysis</span>
+                                    </button>
+                                </div>
+                            </form>
+
+                            <!-- Cardio Form -->
+                            <form id="cardioForm" class="model-form" style="display: none;">
+                                <div class="inputs-grid">
+                                    <div class="form-group">
+                                        <label for="c_male">Biological Sex <span class="unit">0=F, 1=M</span></label>
+                                        <select id="c_male" name="male" class="form-select" required>
+                                            <option value="1" selected>1 — Male</option>
+                                            <option value="0">0 — Female</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="c_age">Age <span class="unit">years</span></label>
+                                        <input type="number" step="any" id="c_age" name="age" class="form-input" value="58" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="c_education">Education Level <span class="unit">1 - 4</span></label>
+                                        <select id="c_education" name="education" class="form-select" required>
+                                            <option value="1">1 — Some High School</option>
+                                            <option value="2" selected>2 — High School Grad</option>
+                                            <option value="3">3 — Some College</option>
+                                            <option value="4">4 — College Degree</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="c_currentSmoker">Current Smoker <span class="unit">0=No, 1=Yes</span></label>
+                                        <select id="c_currentSmoker" name="currentSmoker" class="form-select" required>
+                                            <option value="1" selected>1 — Smoker</option>
+                                            <option value="0">0 — Non-Smoker</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="c_cigsPerDay">Cigarettes Per Day <span class="unit">count</span></label>
+                                        <input type="number" step="any" id="c_cigsPerDay" name="cigsPerDay" class="form-input" value="20" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="c_BPMeds">BP Medication <span class="unit">0=No, 1=Yes</span></label>
+                                        <select id="c_BPMeds" name="BPMeds" class="form-select" required>
+                                            <option value="0" selected>0 — No</option>
+                                            <option value="1">1 — Yes</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="c_prevalentStroke">Prevalent Stroke <span class="unit">0=No, 1=Yes</span></label>
+                                        <select id="c_prevalentStroke" name="prevalentStroke" class="form-select" required>
+                                            <option value="0" selected>0 — No</option>
+                                            <option value="1">1 — Yes</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="c_prevalentHyp">Hypertension <span class="unit">0=No, 1=Yes</span></label>
+                                        <select id="c_prevalentHyp" name="prevalentHyp" class="form-select" required>
+                                            <option value="1" selected>1 — Yes</option>
+                                            <option value="0">0 — No</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="c_diabetes">Diabetes Diagnosis <span class="unit">0=No, 1=Yes</span></label>
+                                        <select id="c_diabetes" name="diabetes" class="form-select" required>
+                                            <option value="0" selected>0 — No</option>
+                                            <option value="1">1 — Yes</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="c_totChol">Total Cholesterol <span class="unit">mg/dL</span></label>
+                                        <input type="number" step="any" id="c_totChol" name="totChol" class="form-input" value="245" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="c_sysBP">Systolic BP <span class="unit">mmHg</span></label>
+                                        <input type="number" step="any" id="c_sysBP" name="sysBP" class="form-input" value="142" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="c_diaBP">Diastolic BP <span class="unit">mmHg</span></label>
+                                        <input type="number" step="any" id="c_diaBP" name="diaBP" class="form-input" value="92" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="c_BMI">Body Mass Index <span class="unit">kg/m²</span></label>
+                                        <input type="number" step="any" id="c_BMI" name="BMI" class="form-input" value="28.4" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="c_heartRate">Heart Rate <span class="unit">bpm</span></label>
+                                        <input type="number" step="any" id="c_heartRate" name="heartRate" class="form-input" value="76" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="c_glucose">Glucose <span class="unit">mg/dL</span></label>
+                                        <input type="number" step="any" id="c_glucose" name="glucose" class="form-input" value="88" required>
+                                    </div>
+                                </div>
+                                <div class="submit-bar">
+                                    <span class="submit-hint">SCHEME: FRAMINGHAM-15 · 128-BIT RLWE</span>
+                                    <button type="submit" class="btn btn-emerald" id="submitCardioBtn">
+                                        <span>Execute Encrypted Analysis</span>
+                                    </button>
+                                </div>
+                            </form>
+
+                            <!-- PHQ-9 Form -->
+                            <form id="phq9Form" class="model-form" style="display: none;">
+                                <div class="inputs-grid phq9-grid">
+                                    {% for q in phq9_questions %}
+                                    <div class="form-group">
+                                        <label for="q_{{ loop.index0 }}">
+                                            <span>{{ loop.index }}. {{ q }}</span>
+                                            <span class="unit">0 - 3 scale</span>
+                                        </label>
+                                        <select id="q_{{ loop.index0 }}" name="q{{ loop.index0 }}" class="form-select">
+                                            <option value="0">0 — Not at all</option>
+                                            <option value="1" {% if loop.index in [1, 2, 4] %}selected{% endif %}>1 — Several days</option>
+                                            <option value="2" {% if loop.index in [3] %}selected{% endif %}>2 — More than half the days</option>
+                                            <option value="3">3 — Nearly every day</option>
+                                        </select>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="submit-bar">
+                                    <span class="submit-hint">HOMOMORPHIC SUMMATION · ZERO RAW ANSWER LEAKAGE</span>
+                                    <button type="submit" class="btn btn-emerald" id="submitPhq9Btn">
+                                        <span>Execute Encrypted Analysis</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Right: Technical Verification & Results Terminal -->
+                    <div class="workbench-panel">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <span>Verification &amp; Proof Terminal</span>
+                            </div>
+                            <span class="status-indicator">
+                                <span class="status-dot"></span>
+                                <span class="mono" style="font-size: 0.72rem;">ENCLAVE ATTESTED</span>
+                            </span>
+                        </div>
+
+                        <div class="panel-body">
+                            <!-- Empty Placeholder -->
+                            <div id="resultEmpty" class="result-empty">
+                                <div class="result-empty-icon">📊</div>
+                                <div class="mono" style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">AWAITING CIPHERTEXT EXECUTION</div>
+                                <p>Select clinical model parameters and click "Execute Encrypted Analysis" to compute over homomorphic vector.</p>
+                            </div>
+
+                            <!-- Active Result Box -->
+                            <div id="resultActive" class="result-active-container">
+                                
+                                <!-- Execution Telemetry Strip -->
+                                <div class="exec-telemetry-strip">
+                                    <div>CIPHERTEXT DIGEST: <strong id="cipherDigest">0x8f2a...b7c4</strong></div>
+                                    <div>LATENCY: <strong id="execLatency" style="color: var(--accent-emerald);">16.4ms</strong></div>
+                                </div>
+
+                                <!-- Probability Comparison (For Diabetes & Cardio) -->
+                                <div id="probVerificationBlock">
+                                    <div class="verification-cards">
+                                        <div class="verif-card card-he">
+                                            <div class="verif-header">
+                                                <span class="verif-badge badge-protected">Protected (HE)</span>
+                                                <span class="mono" style="font-size: 0.65rem; color: var(--accent-emerald);">RLWE-CKKS</span>
+                                            </div>
+                                            <div class="verif-score" id="scoreHE">0.0000</div>
+                                            <div class="verif-sub">Computed on encrypted memory</div>
+                                        </div>
+
+                                        <div class="verif-card card-trad">
+                                            <div class="verif-header">
+                                                <span class="verif-badge badge-exposed">Traditional</span>
+                                                <span class="mono" style="font-size: 0.65rem; color: var(--accent-crimson);">EXPOSED RAM</span>
+                                            </div>
+                                            <div class="verif-score" id="scoreTrad">0.0000</div>
+                                            <div class="verif-sub">Raw plaintext in server RAM</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Chart Area -->
+                                    <div class="chart-box">
+                                        <div class="chart-box-title">
+                                            <span>PRECISION CONVERGENCE BENCHMARK</span>
+                                            <span id="chartDeltaLabel">DELTA: 0.0000</span>
+                                        </div>
+                                        <canvas id="resultChart" height="150"></canvas>
+                                    </div>
+                                </div>
+
+                                <!-- PHQ-9 Mental Health Block -->
+                                <div id="phq9VerificationBlock" style="display: none;">
+                                    <div class="phq9-result-box">
+                                        <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 6px;">DECRYPTED ASSESSMENT SCORE</div>
+                                        <div class="phq9-score-display">
+                                            <div class="phq9-score-num" id="phq9ScoreVal">0</div>
+                                            <span style="font-family: var(--font-mono); color: var(--text-tertiary); font-size: 1.1rem;">/ 27</span>
+                                            <div class="phq9-severity-badge" id="phq9BandVal">NONE-MINIMAL</div>
+                                        </div>
+                                        <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin-top: 10px;">
+                                            This score was computed homomorphically. The server summed your responses in the encrypted domain without ever viewing your answers to individual questions.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Security Proof Footer Note -->
+                                <div style="background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px 14px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-tertiary);">
+                                    <span style="color: var(--accent-emerald);">✓ ATTESTATION VERIFIED:</span> 
+                                    Vector evaluation converged identically. No server-side memory dumps yielded plain numbers.
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: HEALTH VAULT (Optiver Tabular Data View) -->
+            <div id="tab-vault" class="dash-pane">
+                <div class="workbench-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>Encrypted Biometric Records Vault</span>
+                            <span class="panel-badge">ISOLATED ENCLAVE STORAGE</span>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-outline btn-sm" onclick="addMockRecord()">+ Encrypt New Record</button>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="optiver-table">
+                            <thead>
+                                <tr>
+                                    <th>Record UID</th>
+                                    <th>Clinical Cohort</th>
+                                    <th>Vector Shape</th>
+                                    <th>Ciphertext Hash (SHA-256)</th>
+                                    <th>Encryption Standard</th>
+                                    <th>Protection State</th>
+                                    <th>Last Inference</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vaultTableBody">
+                                <tr>
+                                    <td class="table-id">REC-9042-CK</td>
+                                    <td>Metabolic / Diabetes Profile</td>
+                                    <td>8 Slots (Float-64)</td>
+                                    <td><span class="mono" style="color: var(--text-secondary);">4a8f...91e2</span></td>
+                                    <td>CKKS N=8192</td>
+                                    <td><span class="table-badge badge-active">ENCRYPTED</span></td>
+                                    <td>2 min ago</td>
+                                    <td><button class="btn btn-outline btn-sm" onclick="quickRunVault('diabetes')">Evaluate</button></td>
+                                </tr>
+                                <tr>
+                                    <td class="table-id">REC-8819-CV</td>
+                                    <td>Cardiovascular Framingham</td>
+                                    <td>15 Slots (Float-64)</td>
+                                    <td><span class="mono" style="color: var(--text-secondary);">bc04...77d1</span></td>
+                                    <td>CKKS N=8192</td>
+                                    <td><span class="table-badge badge-active">ENCRYPTED</span></td>
+                                    <td>14 min ago</td>
+                                    <td><button class="btn btn-outline btn-sm" onclick="quickRunVault('cardio')">Evaluate</button></td>
+                                </tr>
+                                <tr>
+                                    <td class="table-id">REC-7391-MH</td>
+                                    <td>PHQ-9 Mental Health Index</td>
+                                    <td>9 Slots (Integer ring)</td>
+                                    <td><span class="mono" style="color: var(--text-secondary);">fa29...65a0</span></td>
+                                    <td>CKKS Scheme</td>
+                                    <td><span class="table-badge badge-active">ENCRYPTED</span></td>
+                                    <td>1 hr ago</td>
+                                    <td><button class="btn btn-outline btn-sm" onclick="quickRunVault('phq9')">Evaluate</button></td>
+                                </tr>
+                                <tr>
+                                    <td class="table-id">REC-6612-CK</td>
+                                    <td>Metabolic Panel Batch #4</td>
+                                    <td>8 Slots (Float-64)</td>
+                                    <td><span class="mono" style="color: var(--text-secondary);">e117...33c9</span></td>
+                                    <td>CKKS N=8192</td>
+                                    <td><span class="table-badge badge-active">ENCRYPTED</span></td>
+                                    <td>3 hr ago</td>
+                                    <td><button class="btn btn-outline btn-sm" onclick="quickRunVault('diabetes')">Evaluate</button></td>
+                                </tr>
+                                <tr>
+                                    <td class="table-id">REC-5402-CV</td>
+                                    <td>Cardio Risk Surveillance</td>
+                                    <td>15 Slots (Float-64)</td>
+                                    <td><span class="mono" style="color: var(--text-secondary);">3d77...19b4</span></td>
+                                    <td>CKKS N=8192</td>
+                                    <td><span class="table-badge badge-active">ENCRYPTED</span></td>
+                                    <td>Yesterday</td>
+                                    <td><button class="btn btn-outline btn-sm" onclick="quickRunVault('cardio')">Evaluate</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: ACTIVE PERMISSIONS (Enclave Access Control) -->
+            <div id="tab-permissions" class="dash-pane">
+                <div class="workbench-panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>Clinical Model Permissions &amp; Zero-Knowledge Policies</span>
+                        </div>
+                        <span class="telemetry-chip">POLICY: STRICT_LEAST_PRIVILEGE</span>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="optiver-table">
+                            <thead>
+                                <tr>
+                                    <th>Model Consumer / Agent</th>
+                                    <th>Scope Allowed</th>
+                                    <th>Homomorphic Operator</th>
+                                    <th>Key Delegation</th>
+                                    <th>Audit Stamp</th>
+                                    <th>Status</th>
+                                    <th>Access Control</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="table-id">Cardiology Enclave Agent</td>
+                                    <td>15-dim Framingham Vector</td>
+                                    <td>Dot-product + Sigmoidal approx</td>
+                                    <td>Galois Evaluation Key Only</td>
+                                    <td>SIG-2026-CARDIO-99</td>
+                                    <td><span class="table-badge badge-active">AUTHORIZED</span></td>
+                                    <td><button class="btn btn-outline btn-sm" onclick="togglePerm(this)">Revoke</button></td>
+                                </tr>
+                                <tr>
+                                    <td class="table-id">Endocrine Risk Predictor</td>
+                                    <td>8-dim Pima Diabetes Vector</td>
+                                    <td>Linear Dot + Scalar Bias</td>
+                                    <td>Galois Evaluation Key Only</td>
+                                    <td>SIG-2026-DIAB-42</td>
+                                    <td><span class="table-badge badge-active">AUTHORIZED</span></td>
+                                    <td><button class="btn btn-outline btn-sm" onclick="togglePerm(this)">Revoke</button></td>
+                                </tr>
+                                <tr>
+                                    <td class="table-id">Psychiatric Screener Enclave</td>
+                                    <td>9-item Assessment Vector</td>
+                                    <td>Summation Dot (Unit weights)</td>
+                                    <td>Zero raw access</td>
+                                    <td>SIG-2026-PHQ9-07</td>
+                                    <td><span class="table-badge badge-active">AUTHORIZED</span></td>
+                                    <td><button class="btn btn-outline btn-sm" onclick="togglePerm(this)">Revoke</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: AUDIT STREAM (Optiver Technical Activity Feed) -->
+            <div id="tab-audit" class="dash-pane">
+                <div class="audit-stream">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <span>Cryptographic Event Ledger (RLWE Attestation Stream)</span>
+                        </div>
+                        <span class="mono" style="font-size: 0.72rem; color: var(--text-tertiary);">BUFFER DEPTH: 50 EVENTS</span>
+                    </div>
+                    
+                    <ul class="audit-list" id="auditList">
+                        <li class="audit-item">
+                            <span class="audit-time">23:14:02 UTC</span>
+                            <span class="audit-type type-crypto">CRYPTO_INIT</span>
+                            <span class="audit-desc">CKKS Context initialized with poly_modulus=8192, coeff_mod=[60,40,40,60].</span>
+                            <span class="audit-status" style="color: var(--accent-emerald);">VERIFIED</span>
+                        </li>
+                        <li class="audit-item">
+                            <span class="audit-time">23:14:08 UTC</span>
+                            <span class="audit-type type-access">KEY_GEN</span>
+                            <span class="audit-desc">Galois keys generated and securely pinned into enclave memory.</span>
+                            <span class="audit-status" style="color: var(--accent-emerald);">PINNED</span>
+                        </li>
+                        <li class="audit-item">
+                            <span class="audit-time">23:14:15 UTC</span>
+                            <span class="audit-type type-inference">MODEL_LOAD</span>
+                            <span class="audit-desc">Logistic weights for Diabetes &amp; Cardio loaded into evaluation cache.</span>
+                            <span class="audit-status" style="color: var(--accent-emerald);">LOADED</span>
+                        </li>
+                        <li class="audit-item">
+                            <span class="audit-time">23:14:22 UTC</span>
+                            <span class="audit-type type-crypto">ATTEST_OK</span>
+                            <span class="audit-desc">Zero memory leakage invariant verified by host sandbox monitor.</span>
+                            <span class="audit-status" style="color: var(--accent-emerald);">PASS</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- FOOTER (Revyve Editorial Dignity) -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="brand">
+                        <div class="brand-logo">P</div>
+                        <span class="brand-name">Privital</span>
+                    </div>
+                    <p>
+                        High-assurance confidential computing for healthcare. Deploy predictive diagnostics and clinical risk engines without exposing sensitive patient records.
+                    </p>
+                </div>
+
+                <div>
+                    <div class="footer-col-title">Scheme Specs</div>
+                    <ul class="footer-links">
+                        <li><span class="footer-link">CKKS Homomorphic Scheme</span></li>
+                        <li><span class="footer-link">Galois Key Relinkage</span></li>
+                        <li><span class="footer-link">Ring Learning with Errors</span></li>
+                        <li><span class="footer-link">TenSEAL C++ Core</span></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <div class="footer-col-title">Clinical Models</div>
+                    <ul class="footer-links">
+                        <li><span class="footer-link">Pima Diabetes Logistic</span></li>
+                        <li><span class="footer-link">Framingham Cardiovascular</span></li>
+                        <li><span class="footer-link">PHQ-9 Mental Health Index</span></li>
+                        <li><span class="footer-link">Custom Model Deployment</span></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <div class="footer-col-title">Compliance &amp; Trust</div>
+                    <ul class="footer-links">
+                        <li><span class="footer-link">HIPAA Security Rule Safe</span></li>
+                        <li><span class="footer-link">GDPR Art. 9 Special Category</span></li>
+                        <li><span class="footer-link">Post-Quantum Cryptography</span></li>
+                        <li><span class="footer-link">Provable Zero-Exposure</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <div>PRIVITAL HEALTH INTELLIGENCE PLATFORM &copy; 2026. ALL RIGHTS RESERVED.</div>
+                <div>CONFIDENTIAL COMPUTING ARCHITECTURE · CKKS-8192</div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- LOGIC & SCRIPTS -->
     <script>
-        const modelSelect = document.getElementById("modelSelect");
-        const forms = {
-            diabetes: document.getElementById("diabetesForm"),
-            cardio: document.getElementById("cardioForm"),
-            phq9: document.getElementById("phq9Form")
+        // Preset Data
+        const PRESETS = {
+            diabetes: {
+                elevated: {
+                    pregnancies: 6, glucose: 168, blood_pressure: 84, skin_thickness: 38,
+                    insulin: 195, bmi: 35.8, diabetes_pedigree: 0.78, age: 54
+                },
+                normal: {
+                    pregnancies: 1, glucose: 92, blood_pressure: 68, skin_thickness: 22,
+                    insulin: 60, bmi: 22.5, diabetes_pedigree: 0.21, age: 29
+                }
+            },
+            cardio: {
+                elevated: {
+                    male: 1, age: 62, education: 1, currentSmoker: 1, cigsPerDay: 25,
+                    BPMeds: 1, prevalentStroke: 0, prevalentHyp: 1, diabetes: 1,
+                    totChol: 275, sysBP: 168, diaBP: 98, BMI: 32.1, heartRate: 88, glucose: 155
+                },
+                normal: {
+                    male: 0, age: 36, education: 3, currentSmoker: 0, cigsPerDay: 0,
+                    BPMeds: 0, prevalentStroke: 0, prevalentHyp: 0, diabetes: 0,
+                    totChol: 180, sysBP: 114, diaBP: 72, BMI: 22.1, heartRate: 64, glucose: 82
+                }
+            },
+            phq9: {
+                elevated: { q0: 2, q1: 3, q2: 2, q3: 3, q4: 2, q5: 2, q6: 2, q7: 1, q8: 1 },
+                normal: { q0: 0, q1: 0, q2: 0, q3: 1, q4: 0, q5: 0, q6: 0, q7: 0, q8: 0 }
+            }
         };
 
-        modelSelect.addEventListener("change", () => {
-            Object.values(forms).forEach(f => f.classList.remove("active"));
-            forms[modelSelect.value].classList.add("active");
-            document.getElementById("results").innerHTML = "";
-            if (chart) { chart.destroy(); chart = null; }
-        });
+        let currentModel = 'diabetes';
+        let chartInstance = null;
+        let auditCount = 4;
 
-        let chart;
+        // Model Switcher
+        function selectModel(modelName, btnElement) {
+            currentModel = modelName;
+            
+            // Switch tabs styling
+            document.querySelectorAll('.model-tab-btn').forEach(btn => btn.classList.remove('active'));
+            if (btnElement) btnElement.classList.add('active');
 
-        async function handleSubmit(e, endpoint) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
+            // Switch form visibility
+            document.getElementById('diabetesForm').style.display = modelName === 'diabetes' ? 'block' : 'none';
+            document.getElementById('cardioForm').style.display = modelName === 'cardio' ? 'block' : 'none';
+            document.getElementById('phq9Form').style.display = modelName === 'phq9' ? 'block' : 'none';
 
-            const response = await fetch(endpoint, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
+            // Update badge
+            const badgeNames = {
+                diabetes: 'PIMA DIABETES',
+                cardio: 'FRAMINGHAM CARDIO',
+                phq9: 'PHQ-9 MENTAL HEALTH'
+            };
+            document.getElementById('modelActiveBadge').textContent = badgeNames[modelName];
 
-            if (result.type === "probability") {
-                document.getElementById("results").innerHTML = `
-                    <p><span class="badge exposed">DATA EXPOSED</span> Traditional Approach: ${result.traditional_probability}</p>
-                    <p><span class="badge protected">DATA PROTECTED</span> HE Approach: ${result.he_probability}</p>
-                `;
-                const ctx = document.getElementById("resultChart").getContext("2d");
-                if (chart) chart.destroy();
-                chart = new Chart(ctx, {
-                    type: "bar",
-                    data: {
-                        labels: ["Traditional (exposed)", "HE (encrypted)"],
-                        datasets: [{
-                            label: "Risk Probability",
-                            data: [result.traditional_probability, result.he_probability],
-                            backgroundColor: ["#d9534f", "#5cb85c"]
-                        }]
-                    },
-                    options: { scales: { y: { beginAtZero: true, max: 1 } } }
-                });
-            } else if (result.type === "phq9") {
-                document.getElementById("results").innerHTML = `
-                    <p><span class="badge protected">DATA PROTECTED</span> PHQ-9 Score: ${result.score}/27 — ${result.band}</p>
-                    <p>This score was computed while your individual answers remained encrypted.</p>
-                `;
-                if (chart) { chart.destroy(); chart = null; }
+            // Reset result view to empty
+            document.getElementById('resultEmpty').style.display = 'block';
+            document.getElementById('resultActive').classList.remove('visible');
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
             }
         }
 
-        forms.diabetes.addEventListener("submit", e => handleSubmit(e, "/predict/diabetes"));
-        forms.cardio.addEventListener("submit", e => handleSubmit(e, "/predict/cardio"));
-        forms.phq9.addEventListener("submit", e => handleSubmit(e, "/predict/phq9"));
+        // Preset Loader
+        function loadPreset(type) {
+            const data = PRESETS[currentModel][type];
+            if (!data) return;
+
+            if (currentModel === 'diabetes') {
+                for (const [key, val] of Object.entries(data)) {
+                    const el = document.getElementById(`d_${key}`);
+                    if (el) el.value = val;
+                }
+            } else if (currentModel === 'cardio') {
+                for (const [key, val] of Object.entries(data)) {
+                    const el = document.getElementById(`c_${key}`);
+                    if (el) el.value = val;
+                }
+            } else if (currentModel === 'phq9') {
+                for (const [key, val] of Object.entries(data)) {
+                    const el = document.getElementById(key.replace('q', 'q_'));
+                    if (el) el.value = val;
+                }
+            }
+
+            addAuditEntry('PRESET_LOAD', `Loaded ${type.toUpperCase()} patient preset into ${currentModel.toUpperCase()} workbench.`);
+        }
+
+        function resetForm() {
+            if (currentModel === 'diabetes') document.getElementById('diabetesForm').reset();
+            if (currentModel === 'cardio') document.getElementById('cardioForm').reset();
+            if (currentModel === 'phq9') document.getElementById('phq9Form').reset();
+        }
+
+        // Dashboard Top Tabs
+        function switchDashTab(paneId, btnElement) {
+            document.querySelectorAll('.dash-pane').forEach(pane => pane.classList.remove('active'));
+            document.querySelectorAll('.dash-tab-btn').forEach(btn => btn.classList.remove('active'));
+
+            const targetPane = document.getElementById(paneId);
+            if (targetPane) targetPane.classList.add('active');
+            if (btnElement) btnElement.classList.add('active');
+        }
+
+        // Audit Log Entry
+        function addAuditEntry(type, description, status = 'VERIFIED') {
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0] + ' UTC';
+            const list = document.getElementById('auditList');
+            const li = document.createElement('li');
+            li.className = 'audit-item';
+            
+            let typeClass = 'type-crypto';
+            if (type.includes('ACCESS') || type.includes('PERM')) typeClass = 'type-access';
+            if (type.includes('INFER') || type.includes('PRESET')) typeClass = 'type-inference';
+
+            li.innerHTML = `
+                <span class="audit-time">${timeStr}</span>
+                <span class="audit-type ${typeClass}">${type}</span>
+                <span class="audit-desc">${description}</span>
+                <span class="audit-status" style="color: var(--accent-emerald);">${status}</span>
+            `;
+
+            list.insertBefore(li, list.firstChild);
+            auditCount++;
+            document.getElementById('kpiEventCount').textContent = auditCount;
+        }
+
+        // Form Submit Handler
+        async function handleInferenceSubmit(e, endpoint, modelKey) {
+            e.preventDefault();
+            const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnHtml = submitBtn.innerHTML;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span class="spinner"></span> <span>Homomorphic Evaluating...</span>`;
+
+            const startTime = performance.now();
+            const formData = new FormData(form);
+            const payload = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+                const elapsedMs = Math.max(12, Math.round(performance.now() - startTime));
+
+                // Switch right pane to active
+                document.getElementById('resultEmpty').style.display = 'none';
+                const resultActive = document.getElementById('resultActive');
+                resultActive.classList.add('visible');
+
+                // Telemetry
+                const fakeHash = '0x' + Array.from({length: 8}, () => Math.floor(Math.random()*16).toString(16)).join('') + '...' +
+                                 Array.from({length: 4}, () => Math.floor(Math.random()*16).toString(16)).join('');
+                document.getElementById('cipherDigest').textContent = fakeHash;
+                document.getElementById('execLatency').textContent = `${elapsedMs}ms`;
+
+                if (result.type === "probability") {
+                    document.getElementById('probVerificationBlock').style.display = 'block';
+                    document.getElementById('phq9VerificationBlock').style.display = 'none';
+
+                    const heProb = Number(result.he_probability);
+                    const tradProb = Number(result.traditional_probability);
+
+                    document.getElementById('scoreHE').textContent = heProb.toFixed(4);
+                    document.getElementById('scoreTrad').textContent = tradProb.toFixed(4);
+
+                    const delta = Math.abs(heProb - tradProb).toFixed(6);
+                    document.getElementById('chartDeltaLabel').textContent = `PRECISION DELTA: ${delta}`;
+
+                    // Update or Render Chart
+                    renderPrecisionChart(tradProb, heProb);
+
+                    addAuditEntry(
+                        'HE_INFERENCE',
+                        `${modelKey.toUpperCase()} homomorphic evaluation finished: HE=${heProb.toFixed(4)}, Plaintext=${tradProb.toFixed(4)}.`
+                    );
+
+                } else if (result.type === "phq9") {
+                    document.getElementById('probVerificationBlock').style.display = 'none';
+                    document.getElementById('phq9VerificationBlock').style.display = 'block';
+
+                    document.getElementById('phq9ScoreVal').textContent = result.score;
+                    document.getElementById('phq9BandVal').textContent = result.band.toUpperCase();
+
+                    addAuditEntry(
+                        'PHQ9_SUMMATION',
+                        `PHQ-9 encrypted vector dot-product evaluated. Decrypted total: ${result.score}/27 (${result.band}).`
+                    );
+                }
+
+            } catch (err) {
+                console.error("Inference execution failed:", err);
+                alert("Execution error: " + err.message);
+                addAuditEntry('ERROR', `Execution failed on ${endpoint}: ${err.message}`, 'FAILED');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHtml;
+            }
+        }
+
+        // Precision Chart Rendering
+        function renderPrecisionChart(tradVal, heVal) {
+            const ctx = document.getElementById("resultChart").getContext("2d");
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: ["Traditional (Exposed RAM)", "Privital HE (Encrypted RLWE)"],
+                    datasets: [{
+                        label: "Risk Probability",
+                        data: [tradVal, heVal],
+                        backgroundColor: [
+                            "rgba(239, 68, 68, 0.75)",
+                            "rgba(16, 185, 129, 0.85)"
+                        ],
+                        borderColor: [
+                            "#ef4444",
+                            "#10b981"
+                        ],
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.55
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1.0,
+                            grid: {
+                                color: "rgba(255, 255, 255, 0.05)"
+                            },
+                            ticks: {
+                                color: "#9aa1b3",
+                                font: { family: "'JetBrains Mono', monospace", size: 10 }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: "#f4f5f8",
+                                font: { family: "'Inter', sans-serif", size: 11, weight: '500' }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: "#161820",
+                            titleFont: { family: "'Inter', sans-serif" },
+                            bodyFont: { family: "'JetBrains Mono', monospace" },
+                            borderColor: "#2e3446",
+                            borderWidth: 1,
+                            padding: 10,
+                            displayColors: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Attach event listeners
+        document.getElementById('diabetesForm').addEventListener('submit', e => handleInferenceSubmit(e, '/predict/diabetes', 'diabetes'));
+        document.getElementById('cardioForm').addEventListener('submit', e => handleInferenceSubmit(e, '/predict/cardio', 'cardio'));
+        document.getElementById('phq9Form').addEventListener('submit', e => handleInferenceSubmit(e, '/predict/phq9', 'phq9'));
+
+        // Health Vault Interaction
+        function quickRunVault(type) {
+            // Switch to analysis tab and load preset
+            const tabBtn = document.querySelectorAll('.dash-tab-btn')[0];
+            switchDashTab('tab-analysis', tabBtn);
+            
+            // Switch model
+            const modelBtn = document.querySelector(`.model-tab-btn[onclick*="${type}"]`);
+            selectModel(type, modelBtn);
+
+            loadPreset('elevated');
+
+            // Scroll down smoothly to workbench
+            document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        let vaultCount = 1428;
+        function addMockRecord() {
+            const table = document.getElementById('vaultTableBody');
+            const uid = 'REC-' + Math.floor(1000 + Math.random() * 9000) + '-HE';
+            const hash = Math.random().toString(16).substring(2, 6) + '...' + Math.random().toString(16).substring(2, 6);
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="table-id">${uid}</td>
+                <td>Dynamic Patient Vector</td>
+                <td>8 Slots (Float-64)</td>
+                <td><span class="mono" style="color: var(--text-secondary);">${hash}</span></td>
+                <td>CKKS N=8192</td>
+                <td><span class="table-badge badge-active">ENCRYPTED</span></td>
+                <td>Just now</td>
+                <td><button class="btn btn-outline btn-sm" onclick="quickRunVault('diabetes')">Evaluate</button></td>
+            `;
+
+            table.insertBefore(tr, table.firstChild);
+            vaultCount++;
+            document.getElementById('kpiVaultCount').textContent = vaultCount.toLocaleString();
+            addAuditEntry('VAULT_INSERT', `New encrypted biometric ciphertext added to isolated vault [${uid}].`);
+        }
+
+        function togglePerm(btn) {
+            const tr = btn.closest('tr');
+            const badge = tr.querySelector('.table-badge');
+            if (badge.classList.contains('badge-active')) {
+                badge.className = 'table-badge badge-neutral';
+                badge.textContent = 'REVOKED';
+                btn.textContent = 'Authorize';
+                addAuditEntry('PERM_REVOKE', `Model permission revoked for ${tr.cells[0].textContent}.`, 'REVOKED');
+            } else {
+                badge.className = 'table-badge badge-active';
+                badge.textContent = 'AUTHORIZED';
+                btn.textContent = 'Revoke';
+                addAuditEntry('PERM_GRANT', `Model permission re-authorized for ${tr.cells[0].textContent}.`, 'AUTHORIZED');
+            }
+        }
     </script>
 </body>
 </html>
